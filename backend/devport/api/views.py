@@ -1,7 +1,8 @@
 from .serializers import *
 from users.models import Profile 
 from projects.models import Project, Tag
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -28,8 +29,11 @@ def getProfiles(request):
     return Response(serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def getProjects(request):
-    projects = Project.objects.all()
+    user = request.user
+    projects = user.profile.project_set.all()
+    print(projects)
     serializer = ProjectSerializer(projects, many=True)
     return Response(serializer.data)
 
