@@ -1,6 +1,7 @@
 from .serializers import *
 from users.models import Profile 
 from projects.models import Project, Tag
+from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -36,6 +37,28 @@ def getProjects(request):
     print(projects)
     serializer = ProjectSerializer(projects, many=True)
     return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def createProject(request):
+    if request.method == "POST":
+        serializer = ProjectSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(owner=request.user.profile)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def deleteProject(request, pk):
+    profile = request.user.profile
+    project = profile.project_set.get(id=pk)
+    
+    if request.method == "DELETE":
+        project.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    return Response(status=status.HTTP_400_BAD_REQUEST)
+    
 
 @api_view(['GET'])
 def getTags(request):
